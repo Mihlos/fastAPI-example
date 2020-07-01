@@ -1,11 +1,13 @@
-from fastapi import FastAPI, Body, Header, File
-# TODO: Change imports
+from fastapi import FastAPI, Body, Header, File, Depends, HTTPException
+from starlette.status import HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
+from starlette.responses import Response
+from fastapi.security import OAuth2PasswordRequestForm
+
 from models.user import User
 from models.author import Author
 from models.book import Book
-
-from starlette.status import HTTP_201_CREATED
-from starlette.responses import Response
+from models.jwt_user import JwtUser
+from utils.security import authenticate_user, create_jwt_token, check_jwt_token
 
 
 # Openapi_prefix deprecated. Use root_path, v2 with root_path
@@ -24,7 +26,9 @@ async def post_user(user: User):
 
 
 @app_v1.post("/userheader")
-async def post_user_header(user: User, x_custom: str = Header("default")):
+async def post_user_header(
+    user: User, x_custom: str = Header("default"), jwt: bool = Depends(check_jwt_token)
+):
     return {"request body": user, "custom header": x_custom}
 
 
@@ -42,31 +46,19 @@ async def get_book_with_isbn(isbn: str):
 
 
 # Returning a model including or excluding parameters
-@app_v1.get("/bookmodel/{isbn}",
-         response_model=Book,
-         response_model_exclude=["author"])
+@app_v1.get("/bookmodel/{isbn}", response_model=Book, response_model_exclude=["author"])
 async def get_book_model_with_isbn(isbn: str):
-    author_dict = {
-        "name": "Author1",
-        "book": ["book10", "book20"]
-    }
+    author_dict = {"name": "Author1", "book": ["book10", "book20"]}
     author1 = Author(**author_dict)
 
-    book_dict = {
-        "isbn": "2",
-        "name": "Libro de madre",
-        "author": author1,
-        "year": 2019
-    }
+    book_dict = {"isbn": "2", "name": "Libro de madre", "author": author1, "year": 2019}
     book1 = Book(**book_dict)
 
     return book1
 
 
 @app_v1.get("/author/{id}/book")
-async def get_authors_books(id: int,
-                            category: str,
-                            order: str = "asc"):
+async def get_authors_books(id: int, category: str, order: str = "asc"):
 
     return {"query params": order + category + str(id)}
 
@@ -92,3 +84,17 @@ async def upload_user_photo(response: Response, profile_photo: bytes = File(...)
     response.headers["x-file-size"] = str(len(profile_photo))
     response.set_cookie(key="cookie-api", value="test")
     return {"file size": len(profile_photo)}
+
+
+@app_v1.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    jwt_user_dict = {"username": form_data.username, "password": form_data.password}
+    jwt_user = JwtUser(**jwt_user_dict)
+
+    user = authenticate_user(jwt_user)
+
+    if user is None:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+
+    jwt_token = create_jwt_token(user)
+    return {"token": jwt_token}

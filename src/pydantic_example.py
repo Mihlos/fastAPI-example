@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -10,11 +9,7 @@ class Book(BaseModel):
     date: datetime
 
 
-book1 = {
-    "name": "book1",
-    "price": 11.1,
-    "date": datetime.today()
-}
+book1 = {"name": "book1", "price": 11.1, "date": datetime.today()}
 
 book_object = Book(**book1)
 
