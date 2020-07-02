@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 
 
-app_v2 = FastAPI(root_path="/v2")
+app_v2 = APIRouter()
 
 
 @app_v2.get("/hello")

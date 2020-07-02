@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 import time
 
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 import jwt
 from fastapi.security import OAuth2PasswordBearer
-from starlette.status import HTTP_401_UNAUTHORIZED
 
 from models.jwt_user import JwtUser
 from utils.const import JWT_EXPIRATION_TIME_MINUTES, JWT_ALGORITHM, JWT_SECRET_KEY
+
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 oauth_schema = OAuth2PasswordBearer(tokenUrl="/token")
