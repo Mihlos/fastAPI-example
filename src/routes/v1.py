@@ -26,9 +26,7 @@ async def post_user(user: User):
 
 
 @app_v1.post("/userheader")
-async def post_user_header(
-    user: User, x_custom: str = Header("default"), jwt: bool = Depends(check_jwt_token)
-):
+async def post_user_header(user: User, x_custom: str = Header("default")):
     return {"request body": user, "custom header": x_custom}
 
 
